@@ -51,9 +51,10 @@ jobs:
         run: |
           git config user.name "Aurora Station Bot"
           git config user.email "bot@flarient.com"
-          git add docs/index.html state/last_alert.json
+          git add docs/ 2>/dev/null || true
+          git add state/ 2>/dev/null || true
           git diff --cached --quiet || git commit -m "Aurora dashboard update [skip ci]"
-          git push
+          git push || echo "Nothing to push"
 
       - name: Upload artifact
         if: always()
