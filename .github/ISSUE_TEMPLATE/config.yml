@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Flarient Support
+    url: https://flarient.com/contact
+    about: Questions about Flarient or space weather in general
+  - name: Aurora Station Documentation
+    url: https://github.com/flarientglobal/aurora-station#readme
+    about: Setup guide and FAQ for Aurora Station
