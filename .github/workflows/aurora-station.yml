@@ -1,0 +1,64 @@
+name: Aurora Station Monitor
+
+on:
+  schedule:
+    - cron: '0,30 * * * *'  # Every 30 minutes
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'aurora_station.py'
+      - '.github/workflows/aurora-station.yml'
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: aurora-station
+  cancel-in-progress: false
+
+jobs:
+  check-aurora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check aurora conditions
+        env:
+          AURORA_LAT: ${{ secrets.AURORA_LAT }}
+          AURORA_LON: ${{ secrets.AURORA_LON }}
+          AURORA_LOCATION_NAME: ${{ secrets.AURORA_LOCATION_NAME }}
+          AURORA_WEBHOOK: ${{ secrets.AURORA_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: python aurora_station.py
+
+      - name: Commit dashboard
+        run: |
+          git config user.name "Aurora Station Bot"
+          git config user.email "bot@flarient.com"
+          git add docs/index.html state/last_alert.json
+          git diff --cached --quiet || git commit -m "Aurora dashboard update [skip ci]"
+          git push
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurora-dashboard
+          path: docs/index.html
+          retention-days: 7
