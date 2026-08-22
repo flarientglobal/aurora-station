@@ -67,9 +67,9 @@ def kp_to_visibility(mag_lat, kp):
     Returns: (visible, probability, min_kp_for_visibility)
     """
     # Minimum Kp needed for aurora to be visible from a given magnetic latitude
-    # Based on the empirical relationship: mag_lat ≈ 67 - Kp * 3
-    # So Kp needed = (67 - mag_lat) / 3
-    min_kp = max(0, (67 - mag_lat) / 3)
+    # Based on the unified Flarient algorithm: boundary = 65 - (Kp - 2) * 3
+    # So Kp needed = 2 + (65 - mag_lat) / 3
+    min_kp = max(0, 2 + (65 - mag_lat) / 3)
 
     if kp >= min_kp:
         # Probability based on how far above the threshold we are
@@ -139,15 +139,16 @@ def fetch_aurora_oval():
             return 0
 
         # Find the nearest grid point to our location
+        # NOAA OVATION uses longitudes 0-360; normalise to -180 to 180 to match user coordinates
         min_dist = float("inf")
         nearest_prob = 0
-        for row in coords:
-            for point in row:
-                p_lon, p_lat, prob = point
-                dist = math.sqrt((p_lat - LAT) ** 2 + (p_lon - LON) ** 2)
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest_prob = prob
+        for point in coords:
+            p_lon, p_lat, prob = point[0], point[1], point[2]
+            p_lon_norm = p_lon if p_lon <= 180 else p_lon - 360
+            dist = math.sqrt((p_lat - LAT) ** 2 + (p_lon_norm - LON) ** 2)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_prob = prob
 
         return nearest_prob
     except Exception as e:
